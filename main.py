@@ -1,11 +1,9 @@
 _BITS = 16
 _MAX_INT_SIZE = 2 ** (_BITS-1) - 1
 
-# soma +
-# subtracao -
+
 # multi. *
 # div. /
-
 
 def decToBin(n: int):
     # separado em partes caso 1 linha seja confuso
@@ -51,7 +49,6 @@ def binToDec(n):
         return bd_rec(n, 1)
     return -bd_rec(c2(n), 1)
 
-
 # funcao para transformar um numero inteiro em binario
 # ex: 37 -> 10101
 def toBinary(n):
@@ -70,9 +67,10 @@ def sum(n1: str, n2: str, co: int, i: int) -> str:
     # t recebe a soma de n1 e n2 e o co(carry out da soma anterior)
     # para a soma eh usado 2 portas XOR
     # print(n1, n2)
-    
+   
     if len(n2) < len(n1):
         n2 = ("0" * (len(n1) - len(n2))) + n2
+
     t = str(int(n1[i]) ^ int(n2[i]) ^ int(co))
    
     # 0 ^ 0 = 0
@@ -108,7 +106,6 @@ def absGreater(n1: str, n2: str):
     if n1[i] == "1":
         return True
     return False
-   
 
 def bitshift(n, b, dir):
     # retorna o numero n deslocado para a direita ou esquerda 'b' bits
@@ -132,15 +129,13 @@ def mulOperator(n1, n2):
     q = n1
     m = n2
     count = _BITS
+    print(f'       A                Q        q-1       M')
     while count != 0:
-        # print(f'{a} {q} {q1} {m}')
+        print(f'{a} {q} {q1} {m}')
         if q[-1] == '0' and q1 == '1':
-            # print('somo')
             a = sum(a, m, 0, _BITS-1)
         elif q[-1] == '1' and q1 == '0':
-            # print('subtraiu')
             a = sub(a, m, 0, _BITS-1)
-            # print("a: ", a)
 
         full = bitshift(a+q+q1, 1, "right")
         a = full[:_BITS]
@@ -151,15 +146,14 @@ def mulOperator(n1, n2):
         q = full[_BITS:-1]
         q1 = full[-1]
         count -= 1
-        # print(f'dps {a} {q} {q1} {m} i: {count}')
     return a+q
 
-# TODO: nao utliza isnal aparentemente
 def divOperator(n1, n2):
     a = '0'*_BITS
-    q = n1
-    m = n2
+    q = n1 if n1[0] == '0' else c2(n1)
+    m = n2 if n2[0] == '0' else c2(n2)
     count = _BITS
+    print(f'       A                Q                M')
     while count != 0:
         print(f'{a} {q} {m}')
         full = bitshift(a+q, 1, "left")
@@ -176,7 +170,7 @@ def divOperator(n1, n2):
             q[-1] = '1'
             q = "".join(q)
         count -= 1
-    return q, a
+    return (q if n1[0] == n2[0] else c2(q), a if n1[0] == '0' else c2(a))
 
 
 def handleInput():
@@ -198,6 +192,55 @@ def handleInput():
 
     return decToBin(n1), usr[1], decToBin(n2)
 
+def test(n1, n2, op):
+    b1 = decToBin(n1)
+    b2 = decToBin(n2)
+
+    a, r = 0, 0
+    if op == '*':
+        a = binToDec(mulOperator(b1, b2))
+        r = n1 * n2
+    elif op == '/':
+        if n2 == 0:
+            print(f'divisao por 0, nao entrou\t\t', True)
+            return
+        a, b = divOperator(b1, b2)
+        a = binToDec(a)
+        r = int(n1 / n2)
+    print(f'\t{n1} {op} {n2} = {a}, deve ser: {r}    \t{a == r}')
+    if op == '/':
+        print(f'\tresto = {binToDec(b)} \t\t')
+    return
+def callTest():
+    n1, n2 = 2, 3
+    op = ["*", "/"]
+
+    for i in range(2):
+        # para menor primeiro
+        # + +
+        # + -
+        # - +
+        # - -
+        test(n1 * (-1 if i > 1 else 1) , \
+            n2 * (-1 if i % 2 == 1 else 1) , \
+            op[i])
+
+        # para maior primeiro
+        test(n2 * (-1 if i > 1 else 1) , \
+            n1 * (-1 if i % 2 == 1 else 1) , \
+            op[i])
+
+        # para igual
+        test(n1 * (-1 if i > 1 else 1) , \
+            n1 * (-1 if i % 2 == 1 else 1) , \
+            op[i])
+    test(32767, -32767, '*')
+    test(32767, -32767, '/')
+
+    test(32767, 0, '*')
+    test(32767, 0, '/')
+
+
 def main():
    
    
@@ -211,17 +254,7 @@ def main():
         # print(f'numero 2: {binToDec(n2)}', end='')
         # print(f' \tbinario: {n2}')
         print()
-        if op == "+":
-            r = sum(n1, n2, 0, _BITS-1)
-            print('----------------------------------------------------')
-            print(f'resultado: {r}, ({binToDec(r)})')
-            print('----------------------------------------------------')
-        elif op == "-":
-            r = sub(n1, n2, 0, _BITS-1)
-            print('----------------------------------------------------')
-            print(f'resultado: {r}, ({binToDec(r)})')
-            print('----------------------------------------------------')
-        elif op == "*":
+        if op == "*":
             r = mulOperator(n1, n2)
             print('----------------------------------------------------')
             print(f'resultado: {r}, ({binToDec(r)})')
@@ -232,12 +265,11 @@ def main():
             print('----------------------------------------------------')
             print(f'resultado: {r}, resto: {re}  ({binToDec(r), binToDec(re)})')
             print('----------------------------------------------------')
-
+        else:
+            print(f'Operancao nao reconhecida: {op}')
+            print(f'Por favor digite uma operacao valida: *, /')
         n1, op, n2 = handleInput()    
-
- 
-
-
 
 if __name__ == "__main__":
     main()
+    # callTest()
